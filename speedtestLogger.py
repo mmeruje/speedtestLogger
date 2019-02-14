@@ -100,10 +100,10 @@ print(" * Upload testing...")
 uploadVal   = s.upload()
 print(" ")
 print(" * Results: ")
-print("   Download: ~" + "%.2f" % (downloadVal/1000000)) # values are presented in bits, so:
-print("   Upload  : ~" + "%.2f" % (uploadVal/1000000))   # 1 bit = 0,001 kbits = 0,000001 megabits
+print("   Download: ~" + "%.2f Mbps" % (downloadVal/1000000)) # values are presented in bits, so:
+print("   Upload  : ~" + "%.2f Mbps" % (uploadVal/1000000))   # 1 bit = 0,001 kbits = 0,000001 megabits
 results = s.results.dict()
-print("   Ping    : " + str(results['ping']) + ms)
+print("   Ping    : " + str(results['ping']) + " ms")
 s.results.share()
 
 client = results['client']
