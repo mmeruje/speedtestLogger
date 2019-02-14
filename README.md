@@ -1,6 +1,6 @@
 
 # speedtestLogger
-SpeedtestLogger is self-explanatory name. It is a Python script that uses:
+SpeedtestLogger is a self-explanatory name. It is a Python script that uses:
 - [sivel](https://github.com/sivel)'s **[speedtest-cli](https://github.com/sivel/speedtest-cli)** for internet speed testing;
 - [sqlalchemy](https://github.com/sqlalchemy/sqlalchemy) to store data in the database;
 - sqlite3 as database engine.
