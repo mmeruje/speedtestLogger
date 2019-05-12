@@ -9,17 +9,17 @@ Base = declarative_base()
 errors = {
     "ST_MODELS001" : "An Exception was raised: {0}. ({1})", # For specific Exceptions (i.e., SQLAlchemyError)
     "ST_MODELS002" : "An error ocurred: {0}. ({1})",        # for general Exceptions (i.e., Exceptions)
-    "ST_MODELS003" : "An exception ocurred: {0}."
+    "ST_MODELS003" : "There are no entries on the database."
 }
 
 def to_dict(obj):
     try:
         return {c.key: getattr(obj, c.key)
                 for c in inspect(obj).mapper.column_attrs}
-        except Exception as e:
-            errorCode = 'ST_MODELS002'
-            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+    except Exception as e:
+        errorCode = 'ST_MODELS002'
+        errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.to_dict.__qualname__)
+        return {errorCode: errorDesc}
 
 
 class Client(Base):
@@ -74,62 +74,54 @@ class Entry(Base):
     def __repr__(self):
         return '<Id %r>' % (self.id)
     
-    def sendToDatabase(self):
+
+
+class DatabaseHelper:
+    def sendElementToDatabase(self, element):
         try:
             Session = sessionmaker(bind=engine)
             session = Session()
-            session.add(self)
+            session.add(element) # this shoud be a class instance Entry
             session.commit()
             session.close()
         except SQLAlchemyError as e:
             errorCode = 'ST_MODELS001'
-            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.sendElementToDatabase.__qualname__)
+            return {errorCode: errorDesc}
         except Exception as e:
             errorCode = 'ST_MODELS002'
-            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.sendElementToDatabase.__qualname__)
+            return {errorCode: errorDesc}
         return True
-    
-    def getLastEntry(self):
-        self.getEntry()
 
-    def getEntry(self):
+    def getLastEntry(self):
         try:
             Session = sessionmaker(bind=engine)
             session = Session()
             # get entries
-            entry  = session.query(Entry).order_by(Entry.id).first()
+            entry  = session.query(Entry).order_by(Entry.id.desc()).first()
+            if entry == None:
+                raise Exception("ST_MODELS003") 
             client = session.query(Client).get(entry.id)
             server = session.query(Server).get(entry.id)
             # turn into python objects
             dict_entry = to_dict(entry)
             dict_entry['client'] = to_dict(client)
             dict_entry['server'] = to_dict(server)
-            #
+            # close session
             session.close()
             return dict_entry
         except SQLAlchemyError as e:
             errorCode = 'ST_MODELS001'
-            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.getLastEntry.__qualname__)
+            return {errorCode: errorDesc}
         except Exception as e:
-            errorCode = 'ST_MODELS002'
-            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
-
-
-class Log(Base):
-    __tablename__ = 'st_log'
-    id      = Column(Integer, primary_key=True)
-    entryId = Column(Integer)
-    message = Column(String(1024))
+            errorCode = e.args[0] if len(e.args) > 0 else 'ST_MODELS002'
+            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.getLastEntry.__qualname__) 
+            return {errorCode: errorDesc}
 
 
 db_uri = "sqlite:///speedtest.db"
 engine =  create_engine(db_uri, convert_unicode=False)
 metadata = MetaData(engine)
 Base.metadata.create_all(engine)
-
-
-
