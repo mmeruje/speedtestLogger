@@ -32,7 +32,7 @@ Available HTTP requests:
 - Incremental tweaks such as:
 	- Console parameter parsing to let the script be more or less verbose;
 	- Configuration file (speedtest on boot, check interval, ...)
-	- ~~~SpeedTesting on demand (API calls).~~ Done.
+	- ~~SpeedTesting on demand (API calls).~~ [DONE]
 
 ## But @mmeruje, why did you do this?
 Well... in my hometown, Fibre connection is still not available to public and the ADSL connection there was always (and it still is) dropping from ~12Mbps to ~4Mbps. When I called to the ISP Tech Support, they told me that what is happening is a precaution standard procedure when the copper lines have some problem (when they are saturated?).
