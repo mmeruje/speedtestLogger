@@ -1,8 +1,17 @@
-from flask_sqlalchemy import SQLAlchemy
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import Column, String, Integer, ForeignKey, create_engine, MetaData, Table, func, distinct, inspect
+from sqlalchemy import Column, String, Integer, ForeignKey, create_engine, MetaData, Table, func, distinct, inspect, and_
+import time
+
+"""
+    TODO:
+        Improvements:
+        -> parse ISO Date to UNIX Epoch (?);
+        -> avoid use of time.time() and use the builtin in SQLAlchemy;
+
+"""
 
 Base = declarative_base()
 
@@ -21,6 +30,12 @@ def to_dict(obj):
         errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.to_dict.__qualname__)
         return {errorCode: errorDesc}
 
+def transformIntoEntryDictionary(entryDict,clientDict,serverDict):
+    if clientDict != None:
+        entryDict['client'] = clientDict
+    if serverDict != None:
+        entryDict['server'] = serverDict
+    return entryDict
 
 class Client(Base):
     __tablename__ = 'st_client'
@@ -95,6 +110,9 @@ class DatabaseHelper:
         return True
 
     def getLastEntry(self):
+        """
+            Get last entry from database. Will force to return client and server details.
+        """
         try:
             Session = sessionmaker(bind=engine)
             session = Session()
@@ -105,12 +123,54 @@ class DatabaseHelper:
             client = session.query(Client).get(entry.id)
             server = session.query(Server).get(entry.id)
             # turn into python objects
-            dict_entry = to_dict(entry)
-            dict_entry['client'] = to_dict(client)
-            dict_entry['server'] = to_dict(server)
+            dict_entry = transformIntoEntryDictionary(to_dict(entry), to_dict(client), to_dict(server))
             # close session
             session.close()
             return dict_entry
+        except SQLAlchemyError as e:
+            errorCode = 'ST_MODELS001'
+            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.getLastEntry.__qualname__)
+            return {errorCode: errorDesc}
+        except Exception as e:
+            errorCode = e.args[0] if len(e.args) > 0 else 'ST_MODELS002'
+            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.getLastEntry.__qualname__) 
+            return {errorCode: errorDesc}
+
+    def getTimeIntervalEntries(self, withClient = False, withServer = False, interval = None, onlyDownUp=False): 
+        """
+            Get results between two timestamps.
+            Flags:
+                withClient (defaults to False) - will not return client details
+                withServer (defaults to False) - will not return server details
+            Other values:
+                interval - 2 values array: [start, end] # values in unix epoch
+                            defaults to 24h before "now"
+            
+            TODO: 
+                add / filter unit ? mbps / kbps
+        """
+        try:
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            # set filters 
+            start =  interval[0] if interval != None and len(interval) == 2 else int(time.time()) - 24 * 60 * 60
+            end   =  interval[1] if interval != None and len(interval) == 2 else int(time.time())
+            # get entries
+            entries = session.query(Entry).order_by(Entry.id.asc()).filter(and_(Entry.id > start, Entry.id < end)).all()
+            #
+            if entries == None or len(entries) == 0:
+                raise Exception("ST_MODELS003") 
+            # obtain Client and Server already with to_dict
+            fullEntries = list(map(lambda x : transformIntoEntryDictionary(
+                                                to_dict(x), 
+                                                to_dict(session.query(Client).get(x.id)) if withClient == True else None, 
+                                                to_dict(session.query(Server).get(x.id)) if withServer == True else None),
+                                                entries))
+            if onlyDownUp == True:
+                fullEntries = list(map(lambda x: {'id':x['id'], 'download':x['download'] , 'upload': x['upload']}, fullEntries))
+            # close session
+            session.close()
+            return {'data' : fullEntries}
         except SQLAlchemyError as e:
             errorCode = 'ST_MODELS001'
             errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", DatabaseHelper.getLastEntry.__qualname__)
