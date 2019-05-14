@@ -23,9 +23,9 @@ class SpeedTester():
                                                      # server is up, put 0 here
         # threading stuff:
         self.interval             = interval
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True
-        thread.start()
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.daemon = True
+        self.thread.start()
     
     def executeSpeedtest(self):
         try:
