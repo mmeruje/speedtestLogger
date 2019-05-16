@@ -16,10 +16,10 @@ def to_dict(obj):
     try:
         return {c.key: getattr(obj, c.key)
                 for c in inspect(obj).mapper.column_attrs}
-        except Exception as e:
-            errorCode = 'ST_MODELS002'
-            errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+    except Exception as e:
+        errorCode = 'ST_MODELS002'
+        errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
+        return {errorCode: errorDesc}
 
 
 class Client(Base):
@@ -84,11 +84,11 @@ class Entry(Base):
         except SQLAlchemyError as e:
             errorCode = 'ST_MODELS001'
             errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            return {errorCode: errorDesc}
         except Exception as e:
             errorCode = 'ST_MODELS002'
             errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            return {errorCode: errorDesc}
         return True
     
     def getLastEntry(self):
@@ -112,18 +112,12 @@ class Entry(Base):
         except SQLAlchemyError as e:
             errorCode = 'ST_MODELS001'
             errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            return {errorCode: errorDesc}
         except Exception as e:
             errorCode = 'ST_MODELS002'
             errorDesc = errors[errorCode].replace("{0}", repr(e)).replace("{1}", Entry.method.__qualname__)
-            return error {errorCode: errorDesc}
+            return {errorCode: errorDesc}
 
-
-class Log(Base):
-    __tablename__ = 'st_log'
-    id      = Column(Integer, primary_key=True)
-    entryId = Column(Integer)
-    message = Column(String(1024))
 
 
 db_uri = "sqlite:///speedtest.db"
