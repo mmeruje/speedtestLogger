@@ -20,7 +20,7 @@ class SpeedTestDataAPIHandler:
 
             Right now is returning the last entry that was inserted on the database.
         """
-        lastEntry = self.dbHelper.getLastEntry()
+        lastEntry = self.dbHelper.getTimeIntervalEntries(onlyDownUp=True)
         resp.status = falcon.HTTP_200
         resp.media = lastEntry
         return resp
